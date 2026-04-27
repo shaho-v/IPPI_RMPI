@@ -1,0 +1,169 @@
+---
+title: "Statistics Canada IPPI and RMPI"
+author: "Shaho Vatandoust"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+---
+
+```{r setup, include = F}
+knitr::opts_chunk$set(echo = F)
+library(tidyverse); library(cansim); library(kableExtra)
+
+IPPI_groups <- get_cansim("18-10-0265-01")
+IPPI_products <- get_cansim("18-10-0266-01")
+RMPI <- get_cansim("18-10-0268-01")
+```
+
+```{R Cleaning, include = F}
+# IPPI ----
+df_IPPIgroups <- IPPI_groups %>%
+  select(2,6,7) %>%
+  filter(year(Date) >= "2006") %>%
+  rename(date = Date,
+         NAPCS = "North American Product Classification System (NAPCS)",
+         value = VALUE) %>%
+  mutate(NAPCS = str_remove(NAPCS, "\\s*\\[[^\\]]*\\]"),
+         NAPCS = as.factor(NAPCS)) %>%
+  group_by(NAPCS) %>%
+  mutate(m_change = (value/dplyr::lag(value, 1)-1)*100,
+         y_change = (value/dplyr::lag(value, 12)-1)*100) %>%
+  ungroup()
+
+df_IPPIproducts <- IPPI_products %>%
+  select(2,6,7) %>%
+  filter(year(Date) >= "2006") %>%
+  rename(date = Date,
+         NAPCS = "North American Product Classification System (NAPCS)",
+         value = VALUE) %>%
+  mutate(NAPCS = str_remove(NAPCS, "\\s*\\[[^\\]]*\\]"),
+         NAPCS = as.factor(NAPCS)) %>%
+  group_by(NAPCS) %>%
+  mutate(m_change = (value/dplyr::lag(value, 1)-1)*100,
+         y_change = (value/dplyr::lag(value, 12)-1)*100) %>%
+  ungroup()
+
+# RMPI ----
+df_RMPI <- RMPI %>%
+  select(2,6,7) %>%
+  filter(year(Date) >= "2006") %>%
+  rename(date = Date,
+         NAPCS = "North American Product Classification System (NAPCS)",
+         value = VALUE) %>%
+  mutate(NAPCS = str_remove(NAPCS, "\\s*\\[[^\\]]*\\]"),
+         NAPCS = as.factor(NAPCS)) %>%
+  group_by(NAPCS) %>%
+  mutate(m_change = (value/dplyr::lag(value, 1)-1)*100,
+         y_change = (value/dplyr::lag(value, 12)-1)*100) %>%
+  ungroup()
+
+rm(IPPI_groups, IPPI_products, RMPI)
+```
+
+# IPPI product groups
+## Top Yearly Changes
+```{R}
+df_IPPIgroups %>% 
+  filter(date == "2026-03-01") %>%
+  select(2,4,5) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
+  arrange(desc(y_change)) %>%
+  kable(format = "html",
+        col.names = c("NAPCS","M/M Change","Y/Y Change")) %>%
+  kable_styling()
+```
+
+## Top Monthly Changes
+```{R}
+df_IPPIgroups %>% 
+  filter(date == "2026-03-01") %>%
+  select(2,4,5) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
+  arrange(desc(m_change)) %>%
+  kable(format = "html",
+        col.names = c("NAPCS","M/M Change","Y/Y Change")) %>%
+  kable_styling()
+
+```
+
+# IPPI products
+## Top 20 Yearly Changes 
+```{R}
+df_IPPIproducts %>%
+  filter(date == "2026-03-01") %>%
+  select(2,4,5) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
+  arrange(desc(y_change)) %>%
+  head(20) %>%
+  kable(format = "html",
+        col.names = c("NAPCS","M/M Change","Y/Y Change")) %>%
+  kable_styling()
+```
+
+## Top 20 Monthly Changes
+```{R}
+df_IPPIproducts %>%
+  filter(date == "2026-03-01") %>%
+  select(2,4,5) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
+  arrange(desc(m_change)) %>%
+  head(20) %>%
+  kable(format = "html",
+        col.names = c("NAPCS","M/M Change","Y/Y Change")) %>%
+  kable_styling()
+```
+
+## Bottom 20 Yearly Changes
+```{R}
+df_IPPIproducts %>%
+  filter(date == "2026-03-01") %>%
+  select(2,4,5) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
+  arrange((y_change)) %>%
+  head(20) %>%
+  kable(format = "html",
+        col.names = c("NAPCS","M/M Change","Y/Y Change")) %>%
+  kable_styling()
+```
+
+## Bottom 20 Monthly Changes
+```{R}
+df_IPPIproducts %>%
+  filter(date == "2026-03-01") %>%
+  select(2,4,5) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
+  arrange((m_change)) %>%
+  head(20) %>%
+  kable(format = "html",
+        col.names = c("NAPCS","M/M Change","Y/Y Change")) %>%
+  kable_styling()
+```
+
+# RMPI
+## Top Yearly Changes
+```{R}
+df_RMPI %>%
+  filter(date == "2026-03-01") %>%
+  select(2,4,5) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
+  arrange(desc(y_change)) %>%
+  filter(!is.na(y_change)) %>%
+  kable(format = "html",
+        col.names = c("NAPCS","M/M Change","Y/Y Change")) %>%
+  kable_styling()
+```
+
+## Top Monthly Changes
+```{R}
+df_RMPI %>%
+  filter(date == "2026-03-01") %>%
+  select(2,4,5) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
+  arrange(desc(m_change)) %>%
+  filter(!is.na(y_change)) %>%
+  kable(format = "html",
+        col.names = c("NAPCS","M/M Change","Y/Y Change")) %>%
+  kable_styling()
+```
